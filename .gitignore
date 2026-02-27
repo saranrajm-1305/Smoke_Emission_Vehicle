@@ -1,0 +1,15 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Environment & secrets
+backend/.env
+backend/serviceAccountKey.json
+
+# Logs
+*.log
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/

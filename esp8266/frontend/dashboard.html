@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vehicle Emission Dashboard</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+  </head>
+  <body>
+    <header class="top-nav">
+      <div class="brand">🚗 Vehicle Emission Monitor</div>
+      <div id="clock" class="clock">--</div>
+      <div id="deviceStatusPill" class="status-pill offline">🔴 Offline</div>
+    </header>
+
+    <div id="offlineBanner" class="offline-banner hidden">⚠️ Device Offline or Not Transmitting</div>
+
+    <main class="container">
+      <section class="cards-grid">
+        <div class="card">
+          <h3>💨 CO Level (PPM)</h3>
+          <p id="coValue">0</p>
+        </div>
+        <div class="card">
+          <h3>🌫️ CO2 Level (PPM)</h3>
+          <p id="co2Value">0</p>
+        </div>
+        <div class="card">
+          <h3>🌡️ Temperature (°C)</h3>
+          <p id="tempValue">0</p>
+        </div>
+        <div class="card">
+          <h3>🔔 System Status</h3>
+          <span id="systemStatus" class="badge normal">NORMAL</span>
+        </div>
+      </section>
+
+      <section class="charts-grid">
+        <div class="panel">
+          <h3>CO PPM (Last 30 Readings)</h3>
+          <canvas id="coChart"></canvas>
+        </div>
+        <div class="panel">
+          <h3>CO2 PPM (Last 30 Readings)</h3>
+          <canvas id="co2Chart"></canvas>
+        </div>
+      </section>
+
+      <section class="stats-row panel">
+        <h3>Today's Statistics</h3>
+        <div class="stats-grid">
+          <div><span>Avg CO</span><strong id="avgCo">0</strong></div>
+          <div><span>Avg CO2</span><strong id="avgCo2">0</strong></div>
+          <div><span>Max CO</span><strong id="maxCo">0</strong></div>
+          <div><span>Max CO2</span><strong id="maxCo2">0</strong></div>
+          <div><span>Total Readings</span><strong id="totalReadings">0</strong></div>
+          <div><span>Total Alerts</span><strong id="totalAlerts">0</strong></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Threshold Reference</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Gas</th>
+              <th>Safe</th>
+              <th>Warning</th>
+              <th>Danger</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CO</td>
+              <td>&lt; 35 PPM</td>
+              <td>35 – 69 PPM</td>
+              <td>≥ 70 PPM</td>
+            </tr>
+            <tr>
+              <td>CO2</td>
+              <td>&lt; 1000 PPM</td>
+              <td>1000 – 1999 PPM</td>
+              <td>≥ 2000 PPM</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h3>Alerts Log</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Device ID</th>
+              <th>Gas Type</th>
+              <th>PPM Value</th>
+              <th>Threshold</th>
+              <th>Alert Type</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="alertsTableBody"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script type="module" src="./js/dashboard.js"></script>
+  </body>
+</html>

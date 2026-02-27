@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /sensor_readings/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /alerts_log/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /threshold_config/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
