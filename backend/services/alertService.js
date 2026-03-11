@@ -29,10 +29,13 @@ function getThresholdValue(thresholds, gasType, level) {
   return 0;
 }
 
-async function checkAndAlert(data) {
+async function checkAndAlert(data, options = {}) {
+  const bypassCooldown = Boolean(options.bypassCooldown);
   const thresholds = await getThresholds();
   const cooldownMinutes = Number(process.env.ALERT_COOLDOWN_MINUTES || 5);
-  const cooldownActive = await isInCooldown(data.device_id, cooldownMinutes);
+  const cooldownActive = bypassCooldown
+    ? false
+    : await isInCooldown(data.device_id, cooldownMinutes);
 
   if (cooldownActive) {
     return { alerted: false, reason: "cooldown" };

@@ -10,6 +10,8 @@ import { initCharts, updateCharts } from "./charts.js";
 
 const API_BASE = `${window.location.origin}/api`;
 const API_KEY = "veh_emission_2026_secure_9xK4pQ";
+const EXPECTED_DEVICE_ID = "ESP_001";
+const OFFLINE_SECONDS = 30;
 
 const clockEl = document.getElementById("clock");
 const deviceStatusPill = document.getElementById("deviceStatusPill");
@@ -19,6 +21,12 @@ const co2ValueEl = document.getElementById("co2Value");
 const tempValueEl = document.getElementById("tempValue");
 const systemStatusEl = document.getElementById("systemStatus");
 const alertsTableBody = document.getElementById("alertsTableBody");
+const testAlertBtn = document.getElementById("testAlertBtn");
+const testAlertState = document.getElementById("testAlertState");
+
+let latestLiveReading = null;
+let simulationTimer = null;
+let simulationActive = false;
 
 function setClock() {
   const now = new Date();
@@ -43,11 +51,25 @@ function updateOfflineState(timestamp) {
   if (!timestamp?.seconds) return;
   const readingTime = timestamp?.seconds ? timestamp.seconds * 1000 : 0;
   const secondsAgo = (Date.now() - readingTime) / 1000;
-  const online = secondsAgo <= 30;
+  const online = secondsAgo <= OFFLINE_SECONDS;
 
   deviceStatusPill.textContent = online ? "🟢 Online" : "🔴 Offline";
   deviceStatusPill.className = `status-pill ${online ? "online" : "offline"}`;
   offlineBanner.classList.toggle("hidden", online);
+}
+
+function clearOverviewNoLiveData() {
+  coValueEl.textContent = "--";
+  co2ValueEl.textContent = "--";
+  tempValueEl.textContent = "--";
+
+  coValueEl.className = "";
+  co2ValueEl.className = "";
+  updateStatusBadge("NORMAL");
+
+  deviceStatusPill.textContent = "🔴 Offline";
+  deviceStatusPill.className = "status-pill offline";
+  offlineBanner.classList.remove("hidden");
 }
 
 function updateOverview(latest) {
@@ -65,6 +87,75 @@ function updateOverview(latest) {
   co2ValueEl.className = getLevelClass(co2, 1000, 2000);
   updateStatusBadge(latest.status || "NORMAL");
   updateOfflineState(latest.timestamp);
+}
+
+function applySimulatedDanger() {
+  updateOverview({
+    co_ppm: 120,
+    co2_ppm: 2600,
+    temperature: 35,
+    status: "DANGER",
+    timestamp: { seconds: Math.floor(Date.now() / 1000) },
+  });
+}
+
+function endSimulationAndRestoreLive() {
+  simulationActive = false;
+  if (simulationTimer) {
+    clearTimeout(simulationTimer);
+    simulationTimer = null;
+  }
+
+  if (latestLiveReading) {
+    updateOverview(latestLiveReading);
+  }
+
+  testAlertBtn.disabled = false;
+  testAlertState.textContent = "Idle";
+  testAlertState.className = "test-alert-state";
+}
+
+async function triggerTestAlert() {
+  if (simulationActive) return;
+
+  simulationActive = true;
+  testAlertBtn.disabled = true;
+  testAlertState.textContent = "Triggering...";
+  testAlertState.className = "test-alert-state busy";
+
+  try {
+    const response = await fetch(`${API_BASE}/alerts/test`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": API_KEY,
+      },
+      body: JSON.stringify({ device_id: "dashboard_test_button" }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message || "Unable to trigger test alert");
+    }
+
+    applySimulatedDanger();
+    testAlertState.textContent = "Simulating DANGER for 20s";
+    testAlertState.className = "test-alert-state active";
+
+    simulationTimer = setTimeout(() => {
+      endSimulationAndRestoreLive();
+    }, 20000);
+  } catch (error) {
+    console.error("Test alert failed", error);
+    simulationActive = false;
+    testAlertBtn.disabled = false;
+    testAlertState.textContent = "Failed";
+    testAlertState.className = "test-alert-state failed";
+    setTimeout(() => {
+      testAlertState.textContent = "Idle";
+      testAlertState.className = "test-alert-state";
+    }, 3500);
+  }
 }
 
 async function fetchTodayStats() {
@@ -95,11 +186,30 @@ function listenSensorReadings() {
   );
 
   onSnapshot(q, (snapshot) => {
-    const readings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    if (!readings.length) return;
+    const allReadings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const readings = allReadings.filter((reading) => reading.device_id === EXPECTED_DEVICE_ID);
+
+    if (!readings.length) {
+      latestLiveReading = null;
+      if (!simulationActive) {
+        clearOverviewNoLiveData();
+      }
+      updateCharts([]);
+      return;
+    }
 
     const latestWithTimestamp = readings.find((reading) => reading.timestamp?.seconds) || readings[0];
-    updateOverview(latestWithTimestamp);
+    const readingSeconds = latestWithTimestamp.timestamp?.seconds || 0;
+    const isFresh = readingSeconds > 0 && (Date.now() - readingSeconds * 1000) / 1000 <= OFFLINE_SECONDS;
+
+    latestLiveReading = isFresh ? latestWithTimestamp : null;
+    if (!simulationActive) {
+      if (isFresh) {
+        updateOverview(latestWithTimestamp);
+      } else {
+        clearOverviewNoLiveData();
+      }
+    }
     updateCharts(readings);
   });
 }
@@ -144,6 +254,10 @@ function init() {
 
   fetchTodayStats();
   setInterval(fetchTodayStats, 60000);
+
+  if (testAlertBtn) {
+    testAlertBtn.addEventListener("click", triggerTestAlert);
+  }
 }
 
 init();

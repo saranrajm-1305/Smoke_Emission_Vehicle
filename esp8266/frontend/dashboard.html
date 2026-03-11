@@ -11,6 +11,10 @@
   <body>
     <header class="top-nav">
       <div class="brand">🚗 Vehicle Emission Monitor</div>
+      <div class="top-actions">
+        <button id="testAlertBtn" class="test-alert-btn" type="button">Test Alert</button>
+        <span id="testAlertState" class="test-alert-state">Idle</span>
+      </div>
       <div id="clock" class="clock">--</div>
       <div id="deviceStatusPill" class="status-pill offline">🔴 Offline</div>
     </header>
@@ -62,48 +66,52 @@
 
       <section class="panel">
         <h3>Threshold Reference</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Gas</th>
-              <th>Safe</th>
-              <th>Warning</th>
-              <th>Danger</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>CO</td>
-              <td>&lt; 35 PPM</td>
-              <td>35 – 69 PPM</td>
-              <td>≥ 70 PPM</td>
-            </tr>
-            <tr>
-              <td>CO2</td>
-              <td>&lt; 1000 PPM</td>
-              <td>1000 – 1999 PPM</td>
-              <td>≥ 2000 PPM</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Gas</th>
+                <th>Safe</th>
+                <th>Warning</th>
+                <th>Danger</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>CO</td>
+                <td>&lt; 35 PPM</td>
+                <td>35 - 69 PPM</td>
+                <td>>= 70 PPM</td>
+              </tr>
+              <tr>
+                <td>CO2</td>
+                <td>&lt; 1000 PPM</td>
+                <td>1000 - 1999 PPM</td>
+                <td>>= 2000 PPM</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section class="panel">
         <h3>Alerts Log</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Device ID</th>
-              <th>Gas Type</th>
-              <th>PPM Value</th>
-              <th>Threshold</th>
-              <th>Alert Type</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="alertsTableBody"></tbody>
-        </table>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Device ID</th>
+                <th>Gas Type</th>
+                <th>PPM Value</th>
+                <th>Threshold</th>
+                <th>Alert Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="alertsTableBody"></tbody>
+          </table>
+        </div>
       </section>
     </main>
 

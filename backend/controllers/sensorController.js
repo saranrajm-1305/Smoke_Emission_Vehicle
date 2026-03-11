@@ -154,10 +154,40 @@ async function getTodayStats(req, res) {
   }
 }
 
+async function triggerTestAlert(req, res) {
+  try {
+    const testPayload = {
+      device_id: req.body?.device_id || "dashboard_test_button",
+      co_ppm: 120,
+      co2_ppm: 2600,
+      temperature: Number(req.body?.temperature || 35),
+      status: "DANGER",
+    };
+
+    const alertResult = await checkAndAlert(testPayload, { bypassCooldown: true });
+
+    return res.json({
+      success: true,
+      message: "Test alert triggered",
+      simulation_seconds: 20,
+      data: {
+        co_ppm: testPayload.co_ppm,
+        co2_ppm: testPayload.co2_ppm,
+        temperature: testPayload.temperature,
+        status: testPayload.status,
+      },
+      alert: alertResult,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
 module.exports = {
   postSensorData,
   getLatestSensorData,
   getSensorDataHistory,
   getAlertsHistory,
   getTodayStats,
+  triggerTestAlert,
 };

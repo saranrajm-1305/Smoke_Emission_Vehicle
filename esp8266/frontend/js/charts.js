@@ -11,9 +11,11 @@ function buildBaseConfig(label, borderColor, warningLine, dangerLine) {
           label,
           data: [],
           borderColor,
-          backgroundColor: "rgba(59,130,246,0.2)",
+          backgroundColor: "rgba(59,130,246,0.12)",
           tension: 0.25,
           fill: true,
+          pointRadius: 2,
+          pointHoverRadius: 5,
         },
       ],
     },
@@ -22,17 +24,17 @@ function buildBaseConfig(label, borderColor, warningLine, dangerLine) {
       maintainAspectRatio: false,
       scales: {
         x: {
-          ticks: { color: "#cbd5e1" },
-          grid: { color: "rgba(148,163,184,0.15)" },
+          ticks: { color: "#334155" },
+          grid: { color: "rgba(100,116,139,0.15)" },
         },
         y: {
-          ticks: { color: "#cbd5e1" },
-          grid: { color: "rgba(148,163,184,0.15)" },
+          ticks: { color: "#334155" },
+          grid: { color: "rgba(100,116,139,0.15)" },
         },
       },
       plugins: {
         legend: {
-          labels: { color: "#e2e8f0" },
+          labels: { color: "#0f172a" },
         },
         annotation: {
           annotations: {
@@ -63,8 +65,8 @@ function initCharts() {
 
   if (!coCtx || !co2Ctx) return;
 
-  coChart = new Chart(coCtx, buildBaseConfig("CO PPM", "#22c55e", 35, 70));
-  co2Chart = new Chart(co2Ctx, buildBaseConfig("CO2 PPM", "#06b6d4", 1000, 2000));
+  coChart = new Chart(coCtx, buildBaseConfig("CO PPM", "#1f9d55", 35, 70));
+  co2Chart = new Chart(co2Ctx, buildBaseConfig("CO2 PPM", "#0ea5b7", 1000, 2000));
 }
 
 function updateCharts(readings) {

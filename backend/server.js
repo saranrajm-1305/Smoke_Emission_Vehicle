@@ -15,6 +15,13 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && "body" in err) {
+    return res.status(400).json({ success: false, message: "Invalid JSON payload" });
+  }
+  return next(err);
+});
+
 const limiter = rateLimit({
   windowMs: 60 * 1000,
   max: 120,

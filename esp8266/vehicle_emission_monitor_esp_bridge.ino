@@ -4,10 +4,12 @@
 
 const char* WIFI_SSID = "rika";
 const char* WIFI_PASSWORD = "Sharu1234";
-const char* SERVER_URL = "http://192.168.204.164:3000/api/sensor-data";
+const char* SERVER_URL = "http://192.168.37.164:3000/api/sensor-data";
 const char* API_KEY = "veh_emission_2026_secure_9xK4pQ";
 const char* DEVICE_ID = "ESP_001";
 
+// UNO TX -> ESP8266 D6 (GPIO12) [RX]
+// ESP8266 D5 (GPIO14) [TX] -> UNO RX (optional, currently unused)
 const uint8_t UNO_RX_PIN = D6;
 const uint8_t UNO_TX_PIN = D5;
 
@@ -16,20 +18,6 @@ SoftwareSerial unoSerial(UNO_RX_PIN, UNO_TX_PIN);
 String serialLine;
 unsigned long lastWifiRetry = 0;
 const unsigned long WIFI_RETRY_INTERVAL = 5000;
-const unsigned long WIFI_CONNECT_TIMEOUT = 20000;
-
-const char* wifiStatusToText(wl_status_t status) {
-  switch (status) {
-    case WL_IDLE_STATUS: return "IDLE";
-    case WL_NO_SSID_AVAIL: return "NO_SSID";
-    case WL_SCAN_COMPLETED: return "SCAN_DONE";
-    case WL_CONNECTED: return "CONNECTED";
-    case WL_CONNECT_FAILED: return "CONNECT_FAILED";
-    case WL_CONNECTION_LOST: return "CONNECTION_LOST";
-    case WL_DISCONNECTED: return "DISCONNECTED";
-    default: return "UNKNOWN";
-  }
-}
 
 bool parseDataLine(const String& line, float& coPpm, float& co2Ppm, float& temperature) {
   if (!line.startsWith("DATA,")) {
@@ -40,13 +28,22 @@ bool parseDataLine(const String& line, float& coPpm, float& co2Ppm, float& tempe
   int p2 = line.indexOf(',', p1 + 1);
   int p3 = line.indexOf(',', p2 + 1);
 
-  if (p1 < 0 || p2 < 0 || p3 < 0) {
+  if (p1 < 0 || p2 < 0) {
     return false;
   }
 
   String coStr = line.substring(p1 + 1, p2);
-  String co2Str = line.substring(p2 + 1, p3);
-  String tempStr = line.substring(p3 + 1);
+  String co2Str;
+  String tempStr;
+
+  if (p3 < 0) {
+    // Backward compatibility with older UNO payload: DATA,CO_PPM,CO2_PPM
+    co2Str = line.substring(p2 + 1);
+    tempStr = "0";
+  } else {
+    co2Str = line.substring(p2 + 1, p3);
+    tempStr = line.substring(p3 + 1);
+  }
 
   coPpm = coStr.toFloat();
   co2Ppm = co2Str.toFloat();
@@ -55,30 +52,18 @@ bool parseDataLine(const String& line, float& coPpm, float& co2Ppm, float& tempe
   return true;
 }
 
-bool connectWiFi() {
+void connectWiFi() {
   WiFi.mode(WIFI_STA);
-  WiFi.persistent(false);
-  WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  Serial.print("[WIFI] Connecting to: ");
-  Serial.println(WIFI_SSID);
   Serial.print("[WIFI] Connecting");
-  unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED) {
-    if (millis() - start > WIFI_CONNECT_TIMEOUT) {
-      Serial.println();
-      Serial.print("[WIFI] Timeout. Status: ");
-      Serial.println(wifiStatusToText((wl_status_t)WiFi.status()));
-      return false;
-    }
     delay(500);
     Serial.print(".");
   }
   Serial.println();
   Serial.print("[WIFI] Connected IP: ");
   Serial.println(WiFi.localIP());
-  return true;
 }
 
 void postSensorData(float coPpm, float co2Ppm, float temperature) {
@@ -114,11 +99,11 @@ void postSensorData(float coPpm, float co2Ppm, float temperature) {
 }
 
 void setup() {
-  Serial.begin(74880);
+  Serial.begin(9600);
   unoSerial.begin(9600);
 
   Serial.println();
-  Serial.println("[BOOT] ESP8266 Uno bridge starting...");
+  Serial.println("[BOOT] ESP8266 serial bridge starting...");
   connectWiFi();
 }
 
@@ -129,10 +114,8 @@ void loop() {
       lastWifiRetry = now;
       Serial.println("[WIFI] Reconnecting...");
       WiFi.disconnect();
-      connectWiFi();
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     }
-    delay(50);
-    return;
   }
 
   while (unoSerial.available()) {
