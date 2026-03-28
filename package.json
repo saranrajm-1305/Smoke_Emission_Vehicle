@@ -1,0 +1,14 @@
+{
+  "name": "vehicle-emission-monitor",
+  "version": "1.0.0",
+  "description": "Vehicle Smoke Emission Detection System",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm install --prefix backend",
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev"
+  },
+  "keywords": ["emission", "monitoring", "firebase", "esp8266"],
+  "author": "",
+  "license": "MIT"
+}
