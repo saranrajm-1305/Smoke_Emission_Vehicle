@@ -11,7 +11,6 @@ const sensorRoutes = require("./routes/sensorRoutes");
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 
-app.set('trust proxy', true);
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -28,7 +27,6 @@ const limiter = rateLimit({
   max: 120,
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: "1",
   skip: (req) => {
     // Skip rate limiting for test alert endpoint
     return req.path === "/api/alerts/test" && req.method === "POST";
