@@ -28,7 +28,11 @@ const limiter = rateLimit({
   max: 120,
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: true,
+  trustProxy: "1",
+  skip: (req) => {
+    // Skip rate limiting for test alert endpoint
+    return req.path === "/api/alerts/test" && req.method === "POST";
+  },
 });
 
 app.use("/api", limiter);
