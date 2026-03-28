@@ -51,7 +51,17 @@ function initializeFirebase() {
   return db;
 }
 
+let dbInstance = null;
+
+try {
+  dbInstance = initializeFirebase();
+} catch (error) {
+  console.error("FATAL: Firebase initialization failed during startup");
+  console.error(error.message);
+  process.exit(1);
+}
+
 module.exports = {
   admin,
-  db: initializeFirebase(),
+  db: dbInstance,
 };

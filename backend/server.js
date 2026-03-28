@@ -50,5 +50,16 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`✓ Server listening on port ${PORT}`);
+  console.log(`✓ API endpoints available at http://localhost:${PORT}/api`);
+  console.log(`✓ Dashboard available at http://localhost:${PORT}/`);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
 });
