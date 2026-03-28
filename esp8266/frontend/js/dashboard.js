@@ -18,7 +18,6 @@ const deviceStatusPill = document.getElementById("deviceStatusPill");
 const offlineBanner = document.getElementById("offlineBanner");
 const coValueEl = document.getElementById("coValue");
 const co2ValueEl = document.getElementById("co2Value");
-const tempValueEl = document.getElementById("tempValue");
 const systemStatusEl = document.getElementById("systemStatus");
 const alertsTableBody = document.getElementById("alertsTableBody");
 const testAlertBtn = document.getElementById("testAlertBtn");
@@ -26,7 +25,9 @@ const testAlertState = document.getElementById("testAlertState");
 
 let latestLiveReading = null;
 let simulationTimer = null;
+let countdownTimer = null;
 let simulationActive = false;
+let simulationCountdown = 0;
 
 function setClock() {
   const now = new Date();
@@ -61,7 +62,6 @@ function updateOfflineState(timestamp) {
 function clearOverviewNoLiveData() {
   coValueEl.textContent = "--";
   co2ValueEl.textContent = "--";
-  tempValueEl.textContent = "--";
 
   coValueEl.className = "";
   co2ValueEl.className = "";
@@ -77,11 +77,9 @@ function updateOverview(latest) {
 
   const co = Number(latest.co_ppm || 0);
   const co2 = Number(latest.co2_ppm || 0);
-  const temp = Number(latest.temperature || 0);
 
   coValueEl.textContent = co.toFixed(2);
   co2ValueEl.textContent = co2.toFixed(2);
-  tempValueEl.textContent = temp.toFixed(1);
 
   coValueEl.className = getLevelClass(co, 35, 70);
   co2ValueEl.className = getLevelClass(co2, 1000, 2000);
@@ -99,15 +97,29 @@ function applySimulatedDanger() {
   });
 }
 
+function updateCountdownDisplay() {
+  if (simulationCountdown > 0) {
+    testAlertState.textContent = `Simulating ${simulationCountdown}s`;
+  }
+}
+
 function endSimulationAndRestoreLive() {
   simulationActive = false;
   if (simulationTimer) {
     clearTimeout(simulationTimer);
     simulationTimer = null;
   }
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+  simulationCountdown = 0;
 
+  // Always restore to either live data or offline state
   if (latestLiveReading) {
     updateOverview(latestLiveReading);
+  } else {
+    clearOverviewNoLiveData();
   }
 
   testAlertBtn.disabled = false;
@@ -120,8 +132,9 @@ async function triggerTestAlert() {
 
   simulationActive = true;
   testAlertBtn.disabled = true;
-  testAlertState.textContent = "Triggering...";
-  testAlertState.className = "test-alert-state busy";
+  simulationCountdown = 20;
+  testAlertState.textContent = "Simulating 20s";
+  testAlertState.className = "test-alert-state active";
 
   try {
     const response = await fetch(`${API_BASE}/alerts/test`, {
@@ -139,8 +152,17 @@ async function triggerTestAlert() {
     }
 
     applySimulatedDanger();
-    testAlertState.textContent = "Simulating DANGER for 20s";
-    testAlertState.className = "test-alert-state active";
+    
+    // Start countdown timer
+    countdownTimer = setInterval(() => {
+      simulationCountdown--;
+      updateCountdownDisplay();
+      
+      if (simulationCountdown <= 0) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      }
+    }, 1000);
 
     simulationTimer = setTimeout(() => {
       endSimulationAndRestoreLive();
@@ -149,6 +171,7 @@ async function triggerTestAlert() {
     console.error("Test alert failed", error);
     simulationActive = false;
     testAlertBtn.disabled = false;
+    simulationCountdown = 0;
     testAlertState.textContent = "Failed";
     testAlertState.className = "test-alert-state failed";
     setTimeout(() => {

@@ -16,6 +16,7 @@ function initializeFirebase() {
   }
 
   db = admin.firestore();
+  console.log("Firebase initialized successfully with real database");
   return db;
 }
 
