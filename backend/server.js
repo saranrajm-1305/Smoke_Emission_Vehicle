@@ -27,6 +27,10 @@ const limiter = rateLimit({
   max: 120,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Safe IP extraction from Railway proxy
+    return req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || 'unknown';
+  },
   skip: (req) => {
     // Skip rate limiting for test alert endpoint
     return req.path === "/api/alerts/test" && req.method === "POST";
