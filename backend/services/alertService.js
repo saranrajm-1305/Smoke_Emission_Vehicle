@@ -58,36 +58,31 @@ async function checkAndAlert(data, options = {}) {
   const ppmValue = getPpmValue(data, gasType);
   const thresholdValue = getThresholdValue(thresholds, gasType, level);
 
-  let alertType = "EMAIL";
-  try {
-    await sendEmailAlert(level, data, thresholds);
-    if (isDanger) {
-      await makeAlertCall(data.co_ppm, data.co2_ppm);
-      alertType = "BOTH";
-    }
+  // Send email and SMS in background (don't wait for them)
+  // This ensures the API response is fast
+  sendEmailAlert(level, data, thresholds).catch(error => {
+    console.error("Email alert failed:", error.message);
+  });
 
-    await saveAlertLog({
-      device_id: data.device_id,
-      alert_type: alertType,
-      gas_type: gasType,
-      ppm_value: ppmValue,
-      threshold_value: thresholdValue,
-      status: "SENT",
+  if (isDanger) {
+    makeAlertCall(data.co_ppm, data.co2_ppm).catch(error => {
+      console.error("SMS alert failed:", error.message);
     });
-
-    return { alerted: true, level, alertType };
-  } catch (error) {
-    await saveAlertLog({
-      device_id: data.device_id,
-      alert_type: isDanger ? "BOTH" : "EMAIL",
-      gas_type: gasType,
-      ppm_value: ppmValue,
-      threshold_value: thresholdValue,
-      status: "FAILED",
-    });
-
-    return { alerted: false, reason: "failed", error: error.message };
   }
+
+  // Save alert log asynchronously
+  saveAlertLog({
+    device_id: data.device_id,
+    alert_type: isDanger ? "BOTH" : "EMAIL",
+    gas_type: gasType,
+    ppm_value: ppmValue,
+    threshold_value: thresholdValue,
+    status: "SENT",
+  }).catch(error => {
+    console.error("Failed to save alert log:", error.message);
+  });
+
+  return { alerted: true, level, alertType: isDanger ? "BOTH" : "EMAIL" };
 }
 
 module.exports = {
