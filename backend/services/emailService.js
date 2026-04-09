@@ -1,13 +1,18 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  requireTLS: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  connectionTimeout: 5000,
-  socketTimeout: 5000,
+  connectionTimeout: 10000,
+  socketTimeout: 10000,
+  logger: true,
+  debug: true,
 });
 
 function buildEmailHtml(level, data, thresholds) {
@@ -48,7 +53,19 @@ async function sendEmailAlert(level, data, thresholds) {
     html: buildEmailHtml(level, data, thresholds),
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.messageId);
+  } catch (error) {
+    console.error("Email alert failed:", {
+      error: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+    });
+    throw error; // Re-throw to allow caller to handle
+  }
 }
 
 module.exports = {
