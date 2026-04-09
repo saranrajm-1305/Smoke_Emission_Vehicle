@@ -31,6 +31,7 @@ function getThresholdValue(thresholds, gasType, level) {
 
 async function checkAndAlert(data, options = {}) {
   const bypassCooldown = Boolean(options.bypassCooldown);
+  const awaitEmail = Boolean(options.awaitEmail);
   const thresholds = await getThresholds();
   const cooldownMinutes = Number(process.env.ALERT_COOLDOWN_MINUTES || 5);
   const cooldownActive = bypassCooldown
@@ -58,15 +59,19 @@ async function checkAndAlert(data, options = {}) {
   const ppmValue = getPpmValue(data, gasType);
   const thresholdValue = getThresholdValue(thresholds, gasType, level);
 
-  // Send email and SMS in background (don't wait for them) by default.
-  // For test alerts, we can wait and propagate errors.
-  const emailPromise = sendEmailAlert(level, data, thresholds);
-  if (options.awaitEmail) {
-    await emailPromise;
+  // Send email only if SendGrid is configured
+  const sendgridKey = process.env.SENDGRID_API_KEY;
+  if (sendgridKey) {
+    const emailPromise = sendEmailAlert(level, data, thresholds);
+    if (awaitEmail) {
+      await emailPromise;
+    } else {
+      emailPromise.catch(error => {
+        console.error("Email alert failed:", error.message);
+      });
+    }
   } else {
-    emailPromise.catch(error => {
-      console.error("Email alert failed:", error.message);
-    });
+    console.log("SendGrid not configured, skipping email alert");
   }
 
   if (isDanger) {
