@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <SoftwareSerial.h>
 
 const char* WIFI_SSID = "rika";
@@ -86,7 +87,8 @@ void postSensorData(float coPpm, float co2Ppm, float temperature) {
     return;
   }
 
-  WiFiClient client;
+  WiFiClientSecure client;
+  client.setInsecure();
   HTTPClient http;
   http.begin(client, SERVER_URL);
   http.addHeader("Content-Type", "application/json");
