@@ -5,7 +5,7 @@
 
 const char* WIFI_SSID = "rika";
 const char* WIFI_PASSWORD = "Sharu1234";
-const char* SERVER_URL = "https://smokeemissionvehicle-production.up.railway.app/api/sensor-data";
+const char* SERVER_URL = "http://smokeemissionvehicle-production.up.railway.app/api/sensor-data";
 const char* API_KEY = "veh_emission_2026_secure_9xK4pQ";
 const char* DEVICE_ID = "ESP_001";
 
