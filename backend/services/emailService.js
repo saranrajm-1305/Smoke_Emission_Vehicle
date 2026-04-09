@@ -1,19 +1,14 @@
 const nodemailer = require("nodemailer");
+const sgTransport = require("nodemailer-sendgrid-transport");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  connectionTimeout: 10000,
-  socketTimeout: 10000,
-  logger: true,
-  debug: true,
-});
+// Use SendGrid transport instead of SMTP
+const transporter = nodemailer.createTransport(
+  sgTransport({
+    auth: {
+      api_key: process.env.SENDGRID_API_KEY,
+    },
+  })
+);
 
 function buildEmailHtml(level, data, thresholds) {
   const isDanger = level === "DANGER";
@@ -47,7 +42,7 @@ async function sendEmailAlert(level, data, thresholds) {
   const subject = `${level === "DANGER" ? "🚨 [DANGER]" : "⚠️ [WARNING]"} Vehicle Emission Alert — Device ${data.device_id}`;
 
   const mailOptions = {
-    from: process.env.SMTP_USER,
+    from: process.env.SENDGRID_FROM_EMAIL || "alerts@yourdomain.com", // Use verified SendGrid sender
     to: process.env.ALERT_RECIPIENT,
     subject,
     html: buildEmailHtml(level, data, thresholds),
@@ -64,7 +59,7 @@ async function sendEmailAlert(level, data, thresholds) {
       response: error.response,
       responseCode: error.responseCode,
     });
-    throw error; // Re-throw to allow caller to handle
+    throw error;
   }
 }
 

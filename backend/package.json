@@ -15,6 +15,7 @@
     "express-rate-limit": "^7.5.0",
     "firebase-admin": "^12.7.0",
     "nodemailer": "^6.9.16",
+    "nodemailer-sendgrid-transport": "^0.2.0",
     "twilio": "^5.3.7"
   },
   "devDependencies": {
