@@ -58,11 +58,16 @@ async function checkAndAlert(data, options = {}) {
   const ppmValue = getPpmValue(data, gasType);
   const thresholdValue = getThresholdValue(thresholds, gasType, level);
 
-  // Send email and SMS in background (don't wait for them)
-  // This ensures the API response is fast
-  sendEmailAlert(level, data, thresholds).catch(error => {
-    console.error("Email alert failed:", error.message);
-  });
+  // Send email and SMS in background (don't wait for them) by default.
+  // For test alerts, we can wait and propagate errors.
+  const emailPromise = sendEmailAlert(level, data, thresholds);
+  if (options.awaitEmail) {
+    await emailPromise;
+  } else {
+    emailPromise.catch(error => {
+      console.error("Email alert failed:", error.message);
+    });
+  }
 
   if (isDanger) {
     makeAlertCall(data.co_ppm, data.co2_ppm).catch(error => {

@@ -164,7 +164,10 @@ async function triggerTestAlert(req, res) {
       status: "DANGER",
     };
 
-    const alertResult = await checkAndAlert(testPayload, { bypassCooldown: true });
+    const alertResult = await checkAndAlert(testPayload, {
+      bypassCooldown: true,
+      awaitEmail: true,
+    });
 
     return res.json({
       success: true,
